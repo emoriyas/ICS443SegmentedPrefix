@@ -6,6 +6,9 @@
 \usepackage{epsfig}
 \usepackage{graphicx}
 \usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{tabu}
 
 \newcommand{\handout}[5]{
   \noindent
@@ -51,13 +54,24 @@
 
 \begin{document}
 
-\lecture{NUMBER --- DATE, 2017}{Fall 2017}{Prof.\ Nodari Sitchinava}{Eric Moriyasu, Paul Snieder}
+\lecture{7 --- SEPTEMBER 13, 2017}{Fall 2017}{Prof.\ Nodari Sitchinava}{Eric Moriyasu, Paul Snieder}
+
+\section{}
 
 \section{Overview}
+
+In the last lecture we \ldots.
+
+In this lecture we will cover segmented prefix sums, a parallel sum that is partitioned into separate segments that may  vary in size.
+
 
 \section{Associative Operations}
 
 Associative operations are operations that returns same results if the components are reversed. Summation is an example of an associative operation, subtraction is an example of a non-associative operation.
+
+\subsection{Symbols}
+
+$\mathbb{R}$ denotes all real numbers
 
 \subsection{Formal definition}
 
@@ -73,12 +87,184 @@ A associative operation takes a set of real numbers as input and outputs a real 
 
 \section{Prefix Sum} %Down Sweep phase?
 
+asdf
+
 \subsection{Down sweep}
+
+asdf
 
 \subsection{Application of Prefix Sum}
 
+asdf
+
 \section{Segmented Prefix Sums}
 
+Let us start by defining prefix sums using $\oplus$, with input X and output Y
+
+  \begin{eqnarray*}
+    Input: X &=& {x_0, x_1, \dots , x_{n-1}}\\
+    Input: Y &=& {y_0, y_1, \dots , y_{n-1}}\\
+    such that&:&
+    \begin{cases}
+      y_i = x_0, & \text{if}\ i = 0 \\
+      y_{i-1} \oplus x, & \text{otherwise}
+    \end{cases}
+  \end{eqnarray*}
+
+Prefix sums recursive algorithms pseudocode:
+
+\begin{algorithm}
+  \begin{algorithmic}[1]
+    \State Pf(X, i)
+    \If {$i = 0$} \\
+      \quad\Return X[i]
+    \Else \\
+      \quad\Return $Pf(X, i - 1) \oplus X[i]$
+    \EndIf
+  \end{algorithmic}
+\end{algorithm}
+
+\subsection{Defining Segmented Prefix Sums}
+
+Segmented Prefix sum is defined as follows
+
+  \begin{eqnarray*}
+    Input: X &=& {x_0, x_1, \dots , x_{n-1}}\\
+    B &=& {b_0, b_1, \dots , b_{n-1}}\\
+    Input: Y &=& {y_0, y_1, \dots , y_{n-1}}\\
+    such that&:&
+    \begin{cases}
+      y_i = x_0, & \text{if}\ i = 0 \\
+      y_{i-1} \oplus x_i, & \text{if}\ b = 0 \\
+      x_i, & \text{if}\ b = 1 \\
+      y_{i-1} \oplus x_i, & \text{otherwise}
+    \end{cases}
+    \\OR &:&
+    \begin{cases}
+      y_i = x_0, & \text{if}\ i = 0 \\
+      [y_{i-1} \cdot (1 - b_i) ] \oplus x_i, & \text{otherwise}
+    \end{cases}
+  \end{eqnarray*}
+
+\paragraph{We can see that these are equivalent:} 
+
+If $b_i = 0$, in the second expression we get $[y_{i-1} \cdot (1-0)] \oplus x_i = y_{i-1} \oplus x_i$, which is what the first expression says if $b_i = 0$.\\
+If $b_i = 1$, we get $[y_{i-1} \cdot] \oplus x_i = 0 \oplus x_i = x_i$. This is also what the frist expression says if $b_i = 1$. Therefore these two expressions are equivalent.
+
+\paragraph{Defube a new operator $\otimes$} 
+To help us compute segmented prefix sums, let us define a new operator, $\otimes$:
+
+  \begin{eqnarray*}
+    Let&:& \otimes: \mathbb{R} \times {0, 1} \longrightarrow \mathbb{R}\\
+    x \otimes b &=& x \cdot b', where b' = boolean complement (0 \longrightarrow 1 and 1 \longrightarrow 0)\\
+    &=&
+    \begin{cases}
+      i, & \text{if}\ b = 1 \\
+      x & \text{if}\ b = 0
+    \end{cases}
+  \end{eqnarray*}
+
+Now we can say that the output, Y is,\
+  \begin{eqnarray*}
+    y_i =
+    \begin{cases}
+      x, & \text{if}\ i = 0 \\
+      (y_{i-1} \otimes b_i) \oplus x_i & \text{otherwise}
+    \end{cases}
+  \end{eqnarray*}
+
+\paragraph{Claim 1:} $\otimes$ is not associative
+
+$(x \otimes b_i) \otimes b_j \neq x \otimes (b_i \otimes b_j)$
+
+proof:\\
+We can see right away that the expression on the right is not a valid expression, since $\otimes$ requires a real number as the first argument and a bit as the second argument. The expression on the right is trying to evaluate two bits, which is not valid. Therefore, $\otimes$ is not an associative operation.\\
+
+
+Now using $\otimes$ in our definition for segmented prefix sums, let’s look at the first three output values:
+
+  \begin{eqnarray*}
+    y_0 &=& x_0\\
+    y_1 &=& (y_0 \otimes b_1) \oplus x_1 = (x_0 \otimes b_1) \oplus x_1\\
+    y_2 &=& (y_1 \otimes b_2) \oplus x_2 = [([x_0 \otimes x_1] \oplus x_1) \otimes b_2] \oplus x_2
+  \end{eqnarray*}
+
+Now we want to simplify this expression. To do this, we want to use the Distributive Property, similar to how multiplication distributes over addition. For this, we want to distribute $\otimes$ over $\oplus$.
+
+\paragraph{Claim 2:} $\otimes$ distributes over $\oplus$
+
+proof:\\
+
+Let u and v be real numbers, and b be a bit.\\
+We want to prove that $(u \oplus v) \otimes b = (u \otimes b) \oplus (v \otimes b)$
+
+  \begin{eqnarray*}
+    (u \oplus v) \otimes b =
+    \begin{cases}
+      i, & \text{if}\ b = 1 \\
+      u \oplus v & \text{if}\ b = 0
+    \end{cases}
+    (u \otimes b) \oplus (v \otimes b) =
+    \begin{cases}
+      i \oplus i = i, & \text{if}\ b = 1 \\
+      u \oplus v & \text{if}\ b = 0
+    \end{cases}
+  \end{eqnarray*}
+
+As you can see, the two expressions simplify to the same values. Therefore the claim is proven, and $\otimes$ distributes over $\oplus$.\\
+
+Now knowing that $\otimes$ distributes over $\oplus$, we can simplify the expression for $y_2$ even further using the distributive property:
+
+  \begin{eqnarray*}
+    y_2 &=& [([x_0 \otimes b_1] \oplus x_1) \otimes b_2] \oplus x_2\\
+    y_2 &=& [([x_0 \otimes b_1] \otimes b_2) \oplus (x_1 \otimes b_2)] \oplus x_2
+  \end{eqnarray*}
+
+  We want to simplify this expression further, however we already proved that $\otimes$ is not an associative operation. We can use a truth table to find an equivalent expression for $[x_0 \otimes b_2] \otimes b_2$, as seen in Table 1:
+
+\paragraph{Table 1:} Truth table for an equivalent expression for $[x_0 \otimes b_1] \otimes b_2$
+
+\begin{tabu} to 0.8\textwidth { | X[3] | X[3] | X[3] | X[3] | X[3] |}
+ \hline
+ $b_1$ & $b_2$ & $(x_0 \otimes b_1) \otimes b_2$ & $b_1 \vee b_2$ & $x_0 \otimes (b_1 \vee b_2)$ \\
+ \hline
+ 0 & 0 & $x_0$ & 0 & $x_0$  \\
+\hline
+ 0 & 1 & i & 1 & i  \\
+\hline
+ 1 & 0 & i & 1 & i  \\
+\hline
+ 1 & 1 & i & 1 & i  \\
+\hline
+\end{tabu}
+
+As seen from Table 1, columns 3 and 5 are equivalent, which means that (x0 ⊗ b1) ⊗ b2 = x0 ⊗ (b1 ∨ b2), and we have now found an equivalent expression to (x0 ⊗ b1) ⊗ b2 that we were looking for.\\
+
+Continuing to simplify the expression for $y_2$, we now get,\\
+$y_2 = ([x_0 \otimes (b_1 \vee b_2)] \oplus (x_1 \otimes b_2)] \oplus x_2$ \\
+This is as far as we can simplify at the moment.\\
+
+To conclude this section, we have now learned two things regarding the $\otimes$ operator:\\
+1) $\otimes$ distributes over $\oplus$\\
+2) $\otimes$ is semi-associative. “Or” ($\vee$) is a companion operator.\\
+
+To continue simplifying, we need to define a binary associative operator.
+
+\subsection{fat dot}
+
+the fat dot $^{\bullet}$ is defined as follows:\\
+
+$^{\bullet}: (\mathbb{R} \times {0,1}) \times (\mathbb{R} \times {0,1}) \longrightarrow (\mathbb{R} \times {0,1})$
+
+Example: $(u, b_1) ^{\bullet} (v, b_2) = (w, b_3)$\\
+
+\paragraph{Define:} $^{\bullet} : (x_i, b_i) ^{\bullet} (x_j, b_j) = ([x_i \otimes b_j] \oplus x_j , [b_1 \vee b_2])$
+
+\paragraph{Claim 3:} For prefix sums, $y_i = x_0 \oplus x_1 \oplus \dots \oplus x_i$
+
+For segmented prefix sums, $y_i = (x_0 , b_0) ^{\bullet} (x_1 , b_1) ^{\bullet} \cdots ^{\bullet} (x_i , b_i)$ will be true if $^{\bullet}$ is an associative operator.
+
+In the next lecture we will prove that $^{\bullet}$ is an associative operator. Once that is proven, we can use $^{\bullet}$ in the prefix sum algorithm to compute segmented prefix sums.            
 
 %\bibliography{mybib}
 \bibliographystyle{alpha}

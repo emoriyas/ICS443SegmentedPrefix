@@ -145,7 +145,7 @@ Segmented Prefix sum is defined as follows
 
 \paragraph{We can see that these are equivalent:} 
 
-If $b_i = 0$, in the second expression we get $[y_{i-1} \cdot (1-0)] \oplus x_i = y_{i-1} \oplus x_i$, which is what the first expression says if $b_i = 0$.\\
+If $b_i = 0$, in the second expression we get $[y_{i-1} \cdot (1-0)] \oplus x_i = y_{i-1} \oplus x_i$, which is what the first expression says if $b_i = I_\oplus$.\\
 If $b_i = 1$, we get $[y_{i-1} \cdot (1 - 1)] \oplus x_i = I_\oplus \oplus x_i = x_i$. This is also what the first expression says if $b_i = 1$. Therefore these two expressions are equivalent.
 
 \subsection{Operator $\otimes$} 
